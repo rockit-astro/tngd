@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+#
+# This file is part of tngd.
+#
+# tngd is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# tngd is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with tngd.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Front end for the TNG weather feed for the Warwick one-metre telescope"""
+
+import datetime
+import feedparser
+import Pyro4
+
+PYRO_HOST = '192.168.0.102'
+PYRO_PORT = 9011
+PYRO_NAME = 'tng_daemon'
+
+TNG_FEED_URI = 'http://tngweb.tng.iac.es/api/meteo/weather/feed.xml'
+TNG_QUERY_TIMEOUT = 5
+
+# pylint: disable=broad-except
+# pylint: disable=too-few-public-methods
+# pylint: disable=no-self-use
+
+class TngWeatherDaemon:
+    """Wraps a web request to the TNG weather feed"""
+    def last_measurement(self):
+        """Query the latest valid measurement.
+        May return None if no data is available"""
+        try:
+            feed = feedparser.parse(TNG_FEED_URI)
+            if feed['bozo']:
+                print('{} ERROR: query returned bogus data: {}' \
+                  .format(datetime.datetime.utcnow(), str(feed)))
+                return None
+
+            data = feed['entries'][0]
+            return {
+                'date': data['tngw_date'] + 'Z',
+                'dust': float(data['tngw_dusttotal']),
+                'solarimeter': float(data['tngw_solarimeter']),
+                'pressure': float(data['tngw_airpressure']),
+                'temperature': float(data['tngw_temperature']),
+                'humidity': float(data['tngw_hum']),
+                'dewpoint': float(data['tngw_dewpoint']),
+
+                'seeing': float(data['tngw_dimmseeing']),
+                'seeing_date': data['tngw_dimmseeing.date'] + 'Z',
+            }
+
+        except Exception as exception:
+            print('{} ERROR: failed to query from TNG weather feed: {}' \
+                  .format(datetime.datetime.utcnow(), str(exception)))
+            return None
+
+def spawn_daemon():
+    """Spawns the daemon and registers it with Pyro"""
+    Pyro4.config.COMMTIMEOUT = 5
+
+    pyro = Pyro4.Daemon(host=PYRO_HOST, port=PYRO_PORT)
+    tng = TngWeatherDaemon()
+    uri = pyro.register(tng, objectId=PYRO_NAME)
+
+    print('Starting TNG weather feed daemon with Pyro ID:', uri)
+    pyro.requestLoop()
+    print('Stopping TNG weather feed with Pyro ID:', uri)
+
+if __name__ == '__main__':
+    spawn_daemon()
