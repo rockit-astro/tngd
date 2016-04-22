@@ -70,6 +70,7 @@ class TngWeatherDaemon:
 def spawn_daemon():
     """Spawns the daemon and registers it with Pyro"""
     Pyro4.config.COMMTIMEOUT = 5
+    Pyro4.config.REQUIRE_EXPOSE = True
 
     pyro = Pyro4.Daemon(host=PYRO_HOST, port=PYRO_PORT)
     tng = TngWeatherDaemon()
