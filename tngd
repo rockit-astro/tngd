@@ -25,6 +25,9 @@ PYRO_HOST = '192.168.0.102'
 PYRO_PORT = 9011
 PYRO_NAME = 'tng_daemon'
 
+# Set automatically when generating RPM package
+SOFTWARE_VERSION = 'UNKNOWN'
+
 TNG_FEED_URI = 'http://tngweb.tng.iac.es/api/meteo/weather/feed.xml'
 TNG_QUERY_TIMEOUT = 5
 
@@ -47,6 +50,7 @@ class TngWeatherDaemon:
             data = feed['entries'][0]
             return {
                 'date': data['tngw_date'] + 'Z',
+                'software_version': SOFTWARE_VERSION,
                 'dust': float(data['tngw_dusttotal']),
                 'solarimeter': float(data['tngw_solarimeter']),
                 'pressure': float(data['tngw_airpressure']),
