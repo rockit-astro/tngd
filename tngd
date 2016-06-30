@@ -20,10 +20,7 @@
 import datetime
 import feedparser
 import Pyro4
-
-PYRO_HOST = '192.168.0.102'
-PYRO_PORT = 9011
-PYRO_NAME = 'tng_daemon'
+import warwick.observatory as observatory
 
 # Set automatically when generating RPM package
 SOFTWARE_VERSION = 'UNKNOWN'
@@ -37,6 +34,8 @@ TNG_QUERY_TIMEOUT = 5
 
 class TngWeatherDaemon:
     """Wraps a web request to the TNG weather feed"""
+
+    @Pyro4.expose
     def last_measurement(self):
         """Query the latest valid measurement.
         May return None if no data is available"""
@@ -65,20 +64,8 @@ class TngWeatherDaemon:
         except Exception as exception:
             print('{} ERROR: failed to query from TNG weather feed: {}' \
                   .format(datetime.datetime.utcnow(), str(exception)))
+            observatory.log.error('tngd', 'Failed to query feed (' + str(exception) + ')')
             return None
 
-def spawn_daemon():
-    """Spawns the daemon and registers it with Pyro"""
-    Pyro4.config.COMMTIMEOUT = 5
-    Pyro4.config.REQUIRE_EXPOSE = True
-
-    pyro = Pyro4.Daemon(host=PYRO_HOST, port=PYRO_PORT)
-    tng = TngWeatherDaemon()
-    uri = pyro.register(tng, objectId=PYRO_NAME)
-
-    print('Starting TNG weather feed daemon with Pyro ID:', uri)
-    pyro.requestLoop()
-    print('Stopping TNG weather feed with Pyro ID:', uri)
-
 if __name__ == '__main__':
-    spawn_daemon()
+    observatory.daemons.tng_log.launch(TngWeatherDaemon())

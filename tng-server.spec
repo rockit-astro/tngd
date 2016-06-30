@@ -1,6 +1,6 @@
 Name:      onemetre-tng-server
-Version:   1.1
-Release:   1
+Version:   1.2
+Release:   0
 Url:       https://github.com/warwick-one-metre/tngd
 Summary:   TNG weather feed client for the Warwick one-metre telescope.
 License:   GPL-3.0
@@ -26,7 +26,6 @@ mkdir -p %{buildroot}%{_unitdir}
 
 %post
 %service_add_post tngd.service
-%fillup_and_insserv -f -y tngd.service
 
 %preun
 %stop_on_removal tngd.service
