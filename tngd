@@ -47,6 +47,17 @@ class TngWeatherDaemon:
                 return None
 
             data = feed['entries'][0]
+            seeing = -1
+            try:
+                seeing_date = datetime.datetime.strptime(data['tngw_dimmseeing.date'],
+                                                         '%Y-%m-%dT%H:%M:%S')
+
+                # Ignore seeing measurements more than 5 minutes old
+                if (datetime.datetime.utcnow() - seeing_date).total_seconds() < 300:
+                    seeing = round(float(data['tngw_dimmseeing.median']), 2)
+            except Exception:
+                pass
+
             return {
                 'date': data['tngw_date'] + 'Z',
                 'software_version': SOFTWARE_VERSION,
@@ -56,9 +67,7 @@ class TngWeatherDaemon:
                 'temperature': float(data['tngw_temperature']),
                 'humidity': float(data['tngw_hum']),
                 'dewpoint': float(data['tngw_dewpoint']),
-
-                'seeing': float(data['tngw_dimmseeing']),
-                'seeing_date': data['tngw_dimmseeing.date'] + 'Z',
+                'seeing': seeing,
             }
 
         except Exception as exception:
