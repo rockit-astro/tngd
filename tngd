@@ -54,7 +54,10 @@ class TngWeatherDaemon:
 
                 # Ignore seeing measurements more than 5 minutes old
                 if (datetime.datetime.utcnow() - seeing_date).total_seconds() < 300:
-                    seeing = round(float(data['tngw_dimmseeing.median']), 2)
+                    if data['tngw_dimmseeing.median'] != 'None':
+                        seeing = round(float(data['tngw_dimmseeing.median']), 2)
+                    else:
+                        seeing = round(float(data['tngw_dimmseeing']), 2)
             except Exception:
                 pass
 
