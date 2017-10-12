@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.4
 #
 # This file is part of tngd.
 #
@@ -22,42 +22,59 @@ import json
 import os
 import sys
 import Pyro4
-import warwick.observatory as observatory
+from warwick.observatory.common import daemons
 
 SCRIPT_NAME = os.path.basename(sys.argv[0])
 sys.excepthook = Pyro4.util.excepthook
+
+FMT_RED = u'\033[91m'
+FMT_BOLD = u'\033[1m'
+FMT_CLEAR = u'\033[0m'
 
 def print_status():
     """Prints the latest environment data in human-readable form"""
     latest = None
     try:
-        with observatory.daemons.tng_log.connect() as tng:
+        with daemons.tng_log.connect() as tng:
             latest = tng.last_measurement()
     except Pyro4.errors.CommunicationError:
         print('error: unable to communicate with the TNG weather feed daemon')
         return 1
 
     if latest is not None:
-        date = datetime.datetime.strptime(latest['date'], '%Y-%m-%dT%H:%M:%SZ')
-        print('Data received \033[1m{}\033[0m:'.format(date))
-        print(u'     Dust Conc.: \033[1m{:.2f} ug/m\u00B3\033[0m'.format(latest['dust']))
-        print(u'    Solarimeter: \033[1m{:.1f} W/m\u00B2\033[0m'.format(latest['solarimeter']))
-        print(u'    Temperature: \033[1m{:.1f} \u00B0C\033[0m'.format(latest['temperature']))
-        print(u'       Humidity: \033[1m{:.1f} %RH\033[0m'.format(latest['humidity']))
-        print(u'        Dew Pt.: \033[1m{:.1f} \u00B0C\033[0m'.format(latest['dewpoint']))
-        if latest['seeing'] > 0:
-            print(u'         Seeing: \033[1m{:.2f}"\033[0m'.format(latest['seeing']))
+        print('     Dust Conc.: ' + format_measurement(latest, 'dust', ' ug/m\u00B3', '.2f'))
+        print('    Solarimeter: ' + format_measurement(latest, 'solarimeter', ' W/m\u00B2'))
+        print('       UV Index: ' + format_measurement(latest, 'uv'))
+        print('       Pressure: ' + format_measurement(latest, 'pressure', ' mbar'))
+        print('     Wind Speed: ' + format_measurement(latest, 'windspeed', ' m/s'))
+        print('      Wind Dir.: ' + format_measurement(latest, 'winddir', ' \u00BA'))
+        print('    Temperature: ' + format_measurement(latest, 'temperature', ' \u00B0C'))
+        print('       Humidity: ' + format_measurement(latest, 'humidity', ' %RH'))
+        print('        Dew Pt.: ' + format_measurement(latest, 'dewpoint', ' \u00B0C'))
+        print('         Seeing: ' + format_measurement(latest, 'seeing', '"'))
         print()
     else:
         print('error: failed to query data')
 
     return 0
 
+def format_measurement(data, sensor, units='', fmt='.1f'):
+    """Generates a formatted string reporting the status of the given sensor"""
+    if not data[sensor + '_valid']:
+        return FMT_BOLD + FMT_RED + "NO DATA" + FMT_CLEAR
+
+    if fmt != '':
+        fmt = ':' + fmt
+
+    date = datetime.datetime.strptime(data[sensor + '_date'], '%Y-%m-%dT%H:%M:%SZ')
+    return FMT_BOLD + ('{0' + fmt +'}').format(data[sensor]) + FMT_CLEAR + units \
+        + ' (at ' + FMT_BOLD + date.strftime('%H:%M:%S') + FMT_CLEAR + ')'
+
 def print_json():
     """Prints the latest environment data in machine-readable form"""
     latest = None
     try:
-        with observatory.daemons.tng_log.connect() as tng:
+        with daemons.tng_log.connect() as tng:
             latest = tng.last_measurement()
     except Pyro4.errors.CommunicationError:
         print('error: unable to communicate with the TNG weather feed daemon')
@@ -88,4 +105,3 @@ if __name__ == '__main__':
 
     # Command not found
     sys.exit(print_usage(SCRIPT_NAME))
-

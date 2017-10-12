@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.4
 #
 # This file is part of tngd.
 #
@@ -18,15 +18,21 @@
 """Front end for the TNG weather feed for the Warwick one-metre telescope"""
 
 import datetime
-import feedparser
+import json
+import urllib.request
 import Pyro4
-import warwick.observatory as observatory
+from warwick.observatory.common import daemons, log
 
 # Set automatically when generating RPM package
 SOFTWARE_VERSION = 'UNKNOWN'
 
-TNG_FEED_URI = 'http://tngweb.tng.iac.es/api/meteo/weather/feed.xml'
-TNG_QUERY_TIMEOUT = 5
+TNG_FEED_URI = 'http://tngweb.tng.iac.es/api/meteo/weather'
+
+# Sensor sections that don't require special handling
+TNG_REGULAR_SENSORS = ['solarimeter', 'temperature', 'dewpoint', 'uv', 'humidity', 'pressure',
+                       'winddir', 'windspeed', 'dust']
+
+TNG_QUERY_TIMEOUT = 3
 
 # pylint: disable=broad-except
 # pylint: disable=too-few-public-methods
@@ -34,50 +40,55 @@ TNG_QUERY_TIMEOUT = 5
 
 class TngWeatherDaemon:
     """Wraps a web request to the TNG weather feed"""
+    def __init__(self):
+        self._query_error = False
 
     @Pyro4.expose
     def last_measurement(self):
         """Query the latest valid measurement.
         May return None if no data is available"""
         try:
-            feed = feedparser.parse(TNG_FEED_URI)
-            if feed['bozo']:
-                print('{} ERROR: query returned bogus data: {}' \
-                  .format(datetime.datetime.utcnow(), str(feed)))
-                return None
+            with urllib.request.urlopen(TNG_FEED_URI, timeout=TNG_QUERY_TIMEOUT) as response:
+                data = json.loads(response.read().decode('utf-8'))
 
-            data = feed['entries'][0]
             seeing = -1
             try:
-                seeing_date = datetime.datetime.strptime(data['tngw_dimmseeing.date'],
-                                                         '%Y-%m-%dT%H:%M:%S')
-
-                # Ignore seeing measurements more than 5 minutes old
-                if (datetime.datetime.utcnow() - seeing_date).total_seconds() < 300:
-                    if data['tngw_dimmseeing.median'] != 'None':
-                        seeing = round(float(data['tngw_dimmseeing.median']), 2)
-                    else:
-                        seeing = round(float(data['tngw_dimmseeing']), 2)
+                if data['seeing']['median']:
+                    seeing = float(data['seeing']['median'])
+                else:
+                    seeing = float(data['seeing']['value'])
             except Exception:
                 pass
 
-            return {
-                'date': data['tngw_date'] + 'Z',
+            ret = {
+                'date': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
                 'software_version': SOFTWARE_VERSION,
-                'dust': float(data['tngw_dusttotal']),
-                'solarimeter': float(data['tngw_solarimeter']),
-                'pressure': float(data['tngw_airpressure']),
-                'temperature': float(data['tngw_temperature']),
-                'humidity': float(data['tngw_hum']),
-                'dewpoint': float(data['tngw_dewpoint']),
                 'seeing': seeing,
+                'seeing_date': data['seeing']['timestamp'],
+                'seeing_valid': not bool(data['seeing']['outdated'])
             }
 
+            for sensor in TNG_REGULAR_SENSORS:
+                ret.update({
+                    sensor: float(data[sensor]['value']),
+                    sensor + '_date': data[sensor]['timestamp'] + 'Z',
+                    sensor + '_valid': not bool(data[sensor]['outdated'])
+                })
+
+            if self._query_error:
+                log.info('tngd', 'Restored contact with TNG weather API')
+                self._query_error = False
+
+            return ret
         except Exception as exception:
-            print('{} ERROR: failed to query from TNG weather feed: {}' \
+            print('{} ERROR: failed to query from TNG weather API: {}' \
                   .format(datetime.datetime.utcnow(), str(exception)))
-            observatory.log.error('tngd', 'Failed to query feed (' + str(exception) + ')')
+
+            if not self._query_error:
+                log.error('tngd', 'Lost contact with TNG weather API')
+                self._query_error = True
+
             return None
 
 if __name__ == '__main__':
-    observatory.daemons.tng_log.launch(TngWeatherDaemon())
+    daemons.tng_log.launch(TngWeatherDaemon())

@@ -11,8 +11,8 @@ all:
 	mkdir -p build
 	cp tngd tngd.bak
 	awk '{sub("SOFTWARE_VERSION = .*$$","SOFTWARE_VERSION = \"$(SERVER_VERSION) ($(GIT_VERSION))\""); print $0}' tngd.bak > tngd
-	${RPMBUILD} -ba tng-server.spec
-	${RPMBUILD} -ba tng-client.spec
+	${RPMBUILD} -ba observatory-tng-server.spec
+	${RPMBUILD} -ba observatory-tng-client.spec
 	mv build/noarch/*.rpm .
 	rm -rf build
 	mv tngd.bak tngd
