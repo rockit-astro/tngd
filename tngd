@@ -64,7 +64,7 @@ class TngWeatherDaemon:
                 'date': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
                 'software_version': SOFTWARE_VERSION,
                 'seeing': seeing,
-                'seeing_date': data['seeing']['timestamp'],
+                'seeing_date': data['seeing']['timestamp'] + 'Z',
                 'seeing_valid': not bool(data['seeing']['outdated'])
             }
 
