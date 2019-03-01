@@ -29,7 +29,7 @@ SOFTWARE_VERSION = 'UNKNOWN'
 TNG_FEED_URI = 'http://tngweb.tng.iac.es/api/meteo/weather'
 
 # Sensor sections that don't require special handling
-TNG_REGULAR_SENSORS = ['solarimeter', 'temperature', 'dewpoint', 'uv', 'humidity', 'pressure',
+TNG_REGULAR_SENSORS = ['solarimeter', 'temperature', 'dewpoint', 'humidity', 'pressure',
                        'winddir', 'windspeed', 'dust']
 
 TNG_QUERY_TIMEOUT = 3

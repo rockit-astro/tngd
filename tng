@@ -44,7 +44,6 @@ def print_status():
     if latest is not None:
         print('     Dust Conc.: ' + format_measurement(latest, 'dust', ' ug/m\u00B3', '.2f'))
         print('    Solarimeter: ' + format_measurement(latest, 'solarimeter', ' W/m\u00B2'))
-        print('       UV Index: ' + format_measurement(latest, 'uv'))
         print('       Pressure: ' + format_measurement(latest, 'pressure', ' mbar'))
         print('     Wind Speed: ' + format_measurement(latest, 'windspeed', ' m/s'))
         print('      Wind Dir.: ' + format_measurement(latest, 'winddir', ' \u00BA'))
