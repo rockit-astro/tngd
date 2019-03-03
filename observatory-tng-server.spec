@@ -1,5 +1,5 @@
 Name:      observatory-tng-server
-Version:   2.3.0
+Version:   2.3.1
 Release:   0
 Url:       https://github.com/warwick-one-metre/tngd
 Summary:   TNG weather feed client for the Warwick one-metre telescope.

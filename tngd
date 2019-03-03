@@ -28,7 +28,7 @@ from warwick.observatory.common import daemons, log
 SOFTWARE_VERSION = 'UNKNOWN'
 
 TNG_FEED_URI = 'http://tngweb.tng.iac.es/api/meteo/weather'
-TNG_QUERY_TIMEOUT = 3
+TNG_QUERY_TIMEOUT = 5
 
 # pylint: disable=broad-except
 # pylint: disable=too-few-public-methods
