@@ -18,6 +18,7 @@
 """Front end for the TNG weather feed for the Warwick one-metre telescope"""
 
 import datetime
+import threading
 import json
 import urllib.request
 import Pyro4
@@ -27,11 +28,6 @@ from warwick.observatory.common import daemons, log
 SOFTWARE_VERSION = 'UNKNOWN'
 
 TNG_FEED_URI = 'http://tngweb.tng.iac.es/api/meteo/weather'
-
-# Sensor sections that don't require special handling
-TNG_REGULAR_SENSORS = ['solarimeter', 'temperature', 'dewpoint', 'humidity', 'pressure',
-                       'winddir', 'windspeed', 'dust']
-
 TNG_QUERY_TIMEOUT = 3
 
 # pylint: disable=broad-except
@@ -43,41 +39,46 @@ class TngWeatherDaemon:
     def __init__(self):
         self._query_error = False
 
+        self._lock = threading.Lock()
+        self._last_measurement_date = None
+        self._last_measurement = None
+
     @Pyro4.expose
     def last_measurement(self):
         """Query the latest valid measurement.
         May return None if no data is available"""
+        now = datetime.datetime.utcnow()
+
+        # Rate limit queries to once per minute
+        if self._last_measurement_date and (now - self._last_measurement_date).total_seconds() < 60:
+            with self._lock:
+                return self._last_measurement
+
         try:
             with urllib.request.urlopen(TNG_FEED_URI, timeout=TNG_QUERY_TIMEOUT) as response:
                 data = json.loads(response.read().decode('utf-8'))
 
-            seeing = -1
-            try:
-                if data['seeing']['median']:
-                    seeing = float(data['seeing']['median'])
-                else:
-                    seeing = float(data['seeing']['value'])
-            except Exception:
-                pass
-
             ret = {
-                'date': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-                'software_version': SOFTWARE_VERSION,
-                'seeing': seeing,
-                'seeing_date': data['seeing']['timestamp'] + 'Z',
-                'seeing_valid': not bool(data['seeing']['outdated'])
+                'date': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             }
 
-            for sensor in TNG_REGULAR_SENSORS:
-                ret.update({
-                    sensor: float(data[sensor]['value']),
-                    sensor + '_date': data[sensor]['timestamp'] + 'Z',
-                    sensor + '_valid': not bool(data[sensor]['outdated'])
-                })
+            for sensor in ['seeing', 'solarimeter', 'dust']:
+                try:
+                    ret[sensor + '_date'] = data[sensor]['timestamp'] + 'Z'
+                    ret[sensor ] = float(data[sensor]['value'])
+                    ret[sensor + '_valid'] = not bool(data[sensor]['outdated'])
+                except Exception:
+                    ret[sensor + '_date'] = data[sensor]['timestamp'] + 'Z'
+                    ret[sensor] = -1
+                    ret[sensor + '_valid'] = False
 
             if self._query_error:
                 log.info('tngd', 'Restored contact with TNG weather API')
                 self._query_error = False
+
+            with self._lock:
+                self._last_measurement = ret
+                self._last_measurement_date = now
 
             return ret
         except Exception as exception:

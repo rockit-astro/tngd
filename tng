@@ -42,15 +42,9 @@ def print_status():
         return 1
 
     if latest is not None:
+        print('         Seeing: ' + format_measurement(latest, 'seeing', '"'))
         print('     Dust Conc.: ' + format_measurement(latest, 'dust', ' ug/m\u00B3', '.2f'))
         print('    Solarimeter: ' + format_measurement(latest, 'solarimeter', ' W/m\u00B2'))
-        print('       Pressure: ' + format_measurement(latest, 'pressure', ' mbar'))
-        print('     Wind Speed: ' + format_measurement(latest, 'windspeed', ' m/s'))
-        print('      Wind Dir.: ' + format_measurement(latest, 'winddir', ' \u00BA'))
-        print('    Temperature: ' + format_measurement(latest, 'temperature', ' \u00B0C'))
-        print('       Humidity: ' + format_measurement(latest, 'humidity', ' %RH'))
-        print('        Dew Pt.: ' + format_measurement(latest, 'dewpoint', ' \u00B0C'))
-        print('         Seeing: ' + format_measurement(latest, 'seeing', '"'))
         print()
     else:
         print('error: failed to query data')
@@ -71,7 +65,6 @@ def format_measurement(data, sensor, units='', fmt='.1f'):
 
 def print_json():
     """Prints the latest environment data in machine-readable form"""
-    latest = None
     try:
         with daemons.tng_log.connect() as tng:
             latest = tng.last_measurement()

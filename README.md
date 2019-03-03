@@ -2,7 +2,7 @@
 
 Part of the observatory software for the Warwick one-meter telescope.
 
-`tngd` is a Pyro frontend that proxies queries to the TNG weather API.
+`tngd` is a Pyro frontend that proxies queries seeing, brightness, and dust concentration from the TNG weather API.
 
 `tng` is a commandline utility that shows the current weather status.
 
