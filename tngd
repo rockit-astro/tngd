@@ -19,8 +19,7 @@
 
 import datetime
 import threading
-import json
-import urllib.request
+import requests
 import Pyro4
 from warwick.observatory.common import daemons, log
 
@@ -55,8 +54,7 @@ class TngWeatherDaemon:
                 return self._last_measurement
 
         try:
-            with urllib.request.urlopen(TNG_FEED_URI, timeout=TNG_QUERY_TIMEOUT) as response:
-                data = json.loads(response.read().decode('utf-8'))
+            data = requests.get(TNG_FEED_URI, timeout=TNG_QUERY_TIMEOUT, verify=False).json()
 
             ret = {
                 'date': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
