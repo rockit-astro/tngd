@@ -2,7 +2,7 @@ Name:      observatory-tng-server
 Version:   2.3.3
 Release:   0
 Url:       https://github.com/warwick-one-metre/tngd
-Summary:   TNG weather feed client for the Warwick one-metre telescope.
+Summary:   TNG weather feed client for the Warwick La Palma telescopes.
 License:   GPL-3.0
 Group:     Unspecified
 BuildArch: noarch
@@ -10,7 +10,7 @@ Requires:  python3, python3-Pyro4, python3-requests, python3-warwick-observatory
 Requires:  observatory-log-client, %{?systemd_requires}
 
 %description
-Part of the observatory software for the Warwick one-meter telescope.
+Part of the observatory software for the Warwick La Palma telescopes.
 
 tngd is a Pyro frontend for querying the TNG weather feed via http.
 

@@ -1,6 +1,6 @@
 ## W1m Vaisala TNG weather proxy daemon [![Travis CI build status](https://travis-ci.org/warwick-one-metre/tngd.svg?branch=master)](https://travis-ci.org/warwick-one-metre/tngd)
 
-Part of the observatory software for the Warwick one-meter telescope.
+Part of the observatory software for the Warwick La Palma telescopes.
 
 `tngd` is a Pyro frontend that proxies queries seeing, brightness, and dust concentration from the TNG weather API.
 

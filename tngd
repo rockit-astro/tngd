@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with tngd.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Front end for the TNG weather feed for the Warwick one-metre telescope"""
+"""Front end for the TNG weather feed for the Warwick La Palma telescopes"""
 
 import datetime
 import threading
@@ -63,7 +63,7 @@ class TngWeatherDaemon:
             for sensor in ['seeing', 'solarimeter', 'dust']:
                 try:
                     ret[sensor + '_date'] = data[sensor]['timestamp'] + 'Z'
-                    ret[sensor ] = float(data[sensor]['value'])
+                    ret[sensor] = float(data[sensor]['value'])
                     ret[sensor + '_valid'] = not bool(data[sensor]['outdated'])
                 except Exception:
                     ret[sensor + '_date'] = data[sensor]['timestamp'] + 'Z'
