@@ -1,12 +1,12 @@
-Name:      observatory-tng-server
-Version:   20220722
-Release:   0
-Url:       https://github.com/warwick-one-metre/tngd
+Name:      rockit-tng-server
+Version:   %{_version}
+Release:   1
+Url:       https://github.com/rockit-astro/tngd
 Summary:   TNG weather feed client for the Warwick La Palma telescopes.
 License:   GPL-3.0
 Group:     Unspecified
 BuildArch: noarch
-Requires:  python3 python3-Pyro4 python3-requests python3-warwick-observatory-common
+Requires:  python3 python3-Pyro4 python3-requests python3-rockit-common
 
 %description
 
