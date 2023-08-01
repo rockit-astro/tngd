@@ -2,8 +2,6 @@
 
 `tngd` is a Pyro frontend that proxies queries seeing, brightness, and dust concentration from the TNG weather API.
 
-`tng` is a commandline utility that shows the current weather status.
-
 See [Software Infrastructure](https://github.com/warwick-one-metre/docs/wiki/Software-Infrastructure) for an overview of the observatory software architecture and instructions for developing and deploying the code.
 
 ### Software setup
